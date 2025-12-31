@@ -1,0 +1,6 @@
+flask
+firebase-admin
+google-generativeai
+python-dotenv
+reportlab
+gunicorn

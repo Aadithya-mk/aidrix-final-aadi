@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Field Force | Aidrix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        body { background-color: #0f172a; overflow-x: hidden; color: white; font-family: 'Outfit', sans-serif; }
+        
+        /* Layout */
+        .sidebar { height: 100vh; background: #020617; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; }
+        .main-content { height: 100vh; overflow-y: auto; }
+        
+        /* Glass Panels */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+        }
+
+        /* Job Cards */
+        .job-card { 
+            background: rgba(30, 41, 59, 0.6); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 16px; 
+            transition: all 0.3s;
+        }
+        .job-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.3); }
+        .priority-assigned { border-left: 4px solid #3b82f6; } 
+        
+        /* Map */
+        #worker-map { height: 400px; width: 100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Verification Overlay */
+        #verification-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+
+        /* Nav Buttons */
+        .btn-nav {
+            color: rgba(255,255,255,0.7);
+            text-align: left;
+            padding: 12px 15px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid transparent;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+        .btn-nav:hover, .btn-nav.active-tab {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-color: rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="verification-overlay" class="d-none">
+        <div class="text-center p-5 glass-panel" style="max-width: 500px;">
+            <i class="bi bi-shield-lock-fill text-warning display-1 mb-4"></i>
+            <h2 class="text-white fw-bold">Account Pending Approval</h2>
+            <p class="text-white-50 my-3">
+                Your worker account is currently under review by the City Admin.<br>
+                Please wait for the administrator to verify your ID.
+            </p>
+            <div class="d-flex gap-3 justify-content-center mt-4">
+                <button class="btn btn-outline-light" onclick="location.reload()">Check Status</button>
+                <button id="logout-locked-btn" class="btn btn-danger">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid g-0">
+        <div class="row g-0">
+            
+            <div class="col-lg-2 d-none d-lg-block sidebar p-4">
+                <div class="d-flex align-items-center gap-3 mb-5">
+                    <img src="{{ url_for('static', filename='logo.png') }}" width="40" class="rounded-3 shadow">
+                    <div>
+                        <h5 class="fw-bold text-white mb-0">AIDRIX</h5>
+                        <small class="text-info fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">FIELD FORCE</small>
+                    </div>
+                </div>
+                
+                <div class="nav flex-column gap-2">
+                    <button class="btn-nav active-tab" onclick="switchTab('jobs', this)">
+                        <i class="bi bi-tools me-3"></i> My Assignments
+                    </button>
+                    <button class="btn-nav" onclick="switchTab('history', this)">
+                        <i class="bi bi-check-circle-fill me-3"></i> Completed
+                    </button>
+                    <button class="btn-nav" onclick="switchTab('alerts', this)">
+                        <i class="bi bi-bell-fill me-3 text-warning"></i> Alerts
+                        <span id="sidebar-badge" class="badge bg-danger ms-auto d-none">0</span>
+                    </button>
+                </div>
+
+                <div class="mt-auto">
+                    <div class="p-3 mb-3 bg-white-10 rounded-3 border border-white-10">
+                        <small class="text-white-50 d-block" style="font-size: 0.7rem;">Logged in as:</small>
+                        <strong class="text-white text-truncate d-block" id="worker-email-display">Checking...</strong>
+                    </div>
+                    <button id="logout-btn" class="btn btn-outline-danger w-100">End Shift</button>
+                </div>
+            </div>
+
+            <div class="col-lg-10 p-4 main-content">
+                
+                <div class="d-flex justify-content-between align-items-center mb-5">
+                    <div>
+                        <h2 class="text-white fw-bold">Field Dashboard</h2>
+                        <p class="text-white-50">View and resolve assigned civic issues.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadJobs()"><i class="bi bi-arrow-clockwise"></i> Sync Data</button>
+                </div>
+
+                <div id="tab-jobs">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <h5 class="text-white mb-3">Current Assignments (<span id="job-count">0</span>)</h5>
+                            <div id="job-list" style="padding-bottom: 50px;">
+                                <div class="text-center text-white-50 mt-5">
+                                    <div class="spinner-border text-primary mb-2"></div>
+                                    <p>Syncing job queue...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="sticky-top" style="top: 20px;">
+                                <div class="glass-panel p-3">
+                                    <h5 class="text-white mb-3">Job Map</h5>
+                                    <div id="worker-map"></div>
+                                    <div class="alert bg-info bg-opacity-10 border-0 text-info mt-3 small mb-0">
+                                        <i class="bi bi-info-circle me-2"></i> Click "Locate" on a job to find it here.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-history" class="d-none">
+                    <div class="glass-panel p-4">
+                        <h4 class="text-white mb-4">Completed Work Log</h4>
+                        <table class="table table-dark table-hover bg-transparent">
+                            <thead><tr class="text-white-50"><th>Issue</th><th>Date Resolved</th><th>Status</th></tr></thead>
+                            <tbody id="history-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-alerts" class="d-none">
+                    <div class="glass-panel p-4" style="max-width: 800px;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="text-white mb-0"><i class="bi bi-bell-fill text-warning me-2"></i>System Notifications</h4>
+                            <button class="btn btn-sm btn-outline-light" onclick="loadNotifications()">Refresh</button>
+                        </div>
+                        <div id="alerts-list">
+                            <p class="text-white-50">No notifications.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+        // CONFIG
+        const firebaseConfig = { apiKey: "AIzaSyA-ClZaEkufcnC_y6LgirCb5nq0h_NxoXg", authDomain: "aidrix-93940.firebaseapp.com", projectId: "aidrix-93940" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        let map, currentMarker;
+        let currentUser;
+
+        // 1. AUTH & VERIFICATION
+        auth.onAuthStateChanged(async user => {
+            if(user) {
+                currentUser = user;
+                document.getElementById('worker-email-display').innerText = user.email;
+                
+                try {
+                    const res = await fetch(`/api/user/profile?uid=${user.uid}`);
+                    const profile = await res.json();
+                    
+                    if (!profile.isVerified) {
+                        document.getElementById('verification-overlay').classList.remove('d-none');
+                    } else {
+                        document.getElementById('verification-overlay').classList.add('d-none');
+                        loadJobs();
+                        loadNotifications();
+                        initMap();
+                        setInterval(loadJobs, 10000); 
+                        setInterval(loadNotifications, 10000); // Poll slower for notifications
+                    }
+                } catch(e) { console.error("Profile check failed", e); }
+            } else {
+                window.location.href = '/';
+            }
+        });
+
+        // 2. LOAD JOBS
+        async function loadJobs() {
+            const res = await fetch('/api/reports/feed');
+            const data = await res.json();
+            
+            const myTasks = data.filter(r => r.status === 'In Progress' && r.assigned_to === currentUser.email);
+            const completed = data.filter(r => r.status === 'Resolved' && r.assigned_to === currentUser.email);
+            
+            document.getElementById('job-count').innerText = myTasks.length;
+            const list = document.getElementById('job-list');
+            list.innerHTML = '';
+            
+            if(myTasks.length === 0) {
+                list.innerHTML = '<div class="alert alert-info border-0 bg-info bg-opacity-10 text-info">No tasks currently assigned to you. Stand by.</div>';
+            }
+
+            myTasks.forEach(job => {
+                let imgHtml = (job.has_image && job.image) ? `<div class="mb-3"><img src="${job.image.startsWith('data:image')?job.image:`data:image/jpeg;base64,${job.image}`}" class="img-fluid rounded" style="max-height:150px;"></div>` : '';
+                
+                list.innerHTML += `
+                    <div class="job-card p-4 mb-3 priority-assigned">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-primary text-white">Assigned To You</span>
+                            <small class="text-white-50">${job.timestamp.split(' ')[0]}</small>
+                        </div>
+                        <h5 class="text-white fw-bold mb-2">${job.description}</h5>
+                        <div class="text-white-50 small mb-3">
+                            <i class="bi bi-geo-alt text-info"></i> Lat: ${job.lat?.toFixed(4)}, Lng: ${job.lng?.toFixed(4)}
+                        </div>
+                        ${imgHtml}
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-info w-50" onclick="locateJob(${job.lat}, ${job.lng})">
+                                <i class="bi bi-map"></i> Locate
+                            </button>
+                            <button class="btn btn-sm btn-success w-50" onclick="resolveJob('${job.id}')">
+                                <i class="bi bi-check-lg"></i> Mark Fixed
+                            </button>
+                        </div>
+                    </div>`;
+            });
+
+            const hist = document.getElementById('history-table');
+            hist.innerHTML = '';
+            completed.forEach(c => {
+                hist.innerHTML += `<tr><td>${c.description}</td><td>${c.timestamp.split(' ')[0]}</td><td><span class="text-success fw-bold">Fixed</span></td></tr>`;
+            });
+        }
+
+        // 3. LOAD NOTIFICATIONS (UPDATED FOR ID & DISMISS)
+        async function loadNotifications() {
+            try {
+                const res = await fetch(`/api/notifications?email=${currentUser.email}`);
+                const data = await res.json();
+                const container = document.getElementById('alerts-list');
+                const badge = document.getElementById('sidebar-badge');
+
+                // Backend now sends [{id: '...', message: '...'}]
+                if(data.length > 0) {
+                    container.innerHTML = '';
+                    badge.innerText = data.length;
+                    badge.classList.remove('d-none');
+                    
+                    data.forEach(notif => {
+                        // Use unique ID for the delete call
+                        container.innerHTML += `
+                            <div class="alert bg-white-10 border-0 text-white mb-2 border-start border-4 border-warning fade show d-flex justify-content-between align-items-center">
+                                <div>${notif.message}</div>
+                                <button type="button" class="btn-close btn-close-white ms-3" aria-label="Close" onclick="dismissAlert('${notif.id}', this)"></button>
+                            </div>`;
+                    });
+                } else {
+                    badge.classList.add('d-none');
+                    container.innerHTML = '<p class="text-white-50">No new notifications.</p>';
+                }
+            } catch(e) { console.error("Notif Error"); }
+        }
+
+        // 4. DISMISS FUNCTION (CALLS BACKEND)
+        window.dismissAlert = async (id, btn) => {
+            // Remove from screen immediately for UX
+            const alertDiv = btn.closest('.alert');
+            if(alertDiv) alertDiv.remove();
+            
+            // Update Badge Count
+            const badge = document.getElementById('sidebar-badge');
+            let count = parseInt(badge.innerText) || 0;
+            if(count > 0) {
+                badge.innerText = count - 1;
+                if(count - 1 === 0) badge.classList.add('d-none');
+            }
+
+            // Call Backend to delete PERMANENTLY
+            try {
+                await fetch('/api/notifications/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id: id })
+                });
+            } catch(e) { console.error("Failed to mark read"); }
+        };
+
+        // 5. UTILS
+        window.locateJob = (lat, lng) => {
+            if(!lat || !lng) return alert("No location data.");
+            if(currentMarker) map.removeLayer(currentMarker);
+            map.setView([lat, lng], 16);
+            currentMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Target Location</b>").openPopup();
+            document.getElementById('worker-map').scrollIntoView({behavior: 'smooth'});
+        };
+
+        window.resolveJob = async (rid) => {
+            if(!confirm("Are you sure this issue is fixed?")) return;
+            try {
+                await fetch('/api/reports/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        id: rid, 
+                        status: 'Resolved',
+                        worker_email: currentUser.email
+                    })
+                });
+                alert("Great work! Job marked as resolved.");
+                loadJobs();
+            } catch(e) { alert("Error updating report."); }
+        };
+
+        function initMap() {
+            if(map) return;
+            map = L.map('worker-map').setView([20.59, 78.96], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        }
+
+        window.switchTab = (tab, btn) => {
+            ['jobs', 'history', 'alerts'].forEach(t => document.getElementById(`tab-${t}`).classList.add('d-none'));
+            document.getElementById(`tab-${tab}`).classList.remove('d-none');
+            if(btn) {
+                document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active-tab'));
+                btn.classList.add('active-tab');
+            }
+            if(tab === 'jobs' && map) setTimeout(() => map.invalidateSize(), 200);
+        };
+
+        const logoutAction = async () => { await signOut(auth); window.location.href = '/'; };
+        document.getElementById('logout-btn').addEventListener('click', logoutAction);
+        document.getElementById('logout-locked-btn').addEventListener('click', logoutAction);
+    </script>
+</body>
+</html>

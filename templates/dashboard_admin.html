@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Command Center | Aidrix</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* BACKGROUND FIX */
+        body { 
+            background-color: #0f172a; 
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-attachment: fixed;
+            background-size: cover;
+            min-height: 100vh;
+            color: white; 
+            font-family: 'Outfit', sans-serif; 
+            overflow: hidden; 
+        }
+        
+        /* SIDEBAR */
+        .sidebar { 
+            height: 100vh; 
+            background: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(20px); 
+            border-right: 1px solid rgba(255,255,255,0.05); 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 1000;
+        }
+
+        /* MAIN CONTENT */
+        .main-scroll-area {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 2rem;
+            padding-bottom: 150px; 
+        }
+        
+        /* Glass Panels */
+        .glass-panel { 
+            background: rgba(30, 41, 59, 0.4); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 20px; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+        }
+        
+        /* Header Profile Pill */
+        .profile-pill {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 8px 24px 8px 8px;
+            transition: all 0.3s ease;
+        }
+        .logout-icon:hover { color: #ef4444 !important; transform: scale(1.1); cursor: pointer; }
+
+        /* Navigation Buttons */
+        .btn-outline-light.text-start { 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            padding-right: 5px;
+            color: rgba(255,255,255,0.7);
+            border: 1px solid transparent;
+        }
+        .btn-outline-light.text-start:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .btn-outline-light.active-tab { 
+            background: linear-gradient(90deg, rgba(59,130,246,0.5) 0%, rgba(147,51,234,0.5) 100%);
+            border-color: rgba(255,255,255,0.2); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background: rgba(30, 41, 59, 0.4); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+        }
+        .feed-img { width: 100%; height: auto; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); margin-top: 10px; max-width: 400px; }
+        .map-container { height: 100%; min-height: 500px; border-radius: 20px; width: 100%; z-index: 1; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Badges & AI */
+        .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; }
+        .bg-pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+        .ai-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 15px;
+        }
+        .priority-score {
+            font-size: 2rem; font-weight: bold;
+            background: -webkit-linear-gradient(#ff9966, #ff5e62);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        
+        /* Action Buttons */
+        .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; border: none; transition: 0.2s; }
+        .btn-approve { background: #198754; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid g-0">
+        <div class="row g-0">
+            
+            <div class="col-lg-3 d-none d-lg-block sidebar p-4">
+                <div class="d-flex align-items-center gap-3 mb-5 mt-2">
+                    <img src="{{ url_for('static', filename='logo.png') }}" width="45" class="rounded-3 shadow-lg">
+                    <div>
+                        <h5 class="fw-bold text-white mb-0" style="letter-spacing: 1px;">AIDRIX</h5>
+                        <small class="text-primary fw-bold" style="font-size: 0.6rem; letter-spacing: 1px;">ADMIN CONSOLE</small>
+                    </div>
+                </div>
+                
+                <div class="nav flex-column gap-3">
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3 active-tab" onclick="switchTab('overview', this)">
+                        <i class="bi bi-grid-1x2-fill me-3"></i> Overview
+                    </button>
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3" onclick="switchTab('workers', this)">
+                        <i class="bi bi-people-fill me-3"></i> Workforce <span id="worker-badge" class="badge bg-danger ms-auto d-none">0</span>
+                    </button>
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3" onclick="switchTab('feed', this)">
+                        <i class="bi bi-newspaper me-3"></i> Community Feed <span id="feed-badge" class="badge bg-primary ms-auto d-none">0</span>
+                    </button>
+                    
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3" onclick="generatePDF()">
+                        <i class="bi bi-file-earmark-pdf-fill me-3 text-danger"></i> Report Generator
+                    </button>
+                    
+                    <div class="text-white-50 small text-uppercase mt-4 mb-2 px-3 fw-bold ls-2" style="font-size: 0.7rem;">Intelligence</div>
+                    
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3" onclick="switchTab('clusters', this)">
+                        <i class="bi bi-diagram-3-fill me-3 text-info"></i> AI Clusters
+                    </button>
+                    <button class="btn btn-outline-light text-start border-0 py-3 px-3" onclick="switchTab('priority', this)">
+                        <i class="bi bi-lightning-charge-fill me-3 text-warning"></i> AI Priority
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-lg-9 main-scroll-area">
+                
+                <div class="d-flex justify-content-between align-items-center mb-5 pt-2">
+                    <div>
+                        <h2 class="text-white fw-bold mb-1">City Command Center</h2>
+                        <p class="text-white-50 mb-0">Real-time infrastructure intelligence & monitoring.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="d-none d-xl-block">
+                             <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                                <i class="bi bi-wifi me-2"></i>Systems Online
+                            </span>
+                        </div>
+                        <div class="profile-pill d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
+                                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #3b82f6, #8b5cf6);">
+                                <i class="bi bi-person-fill fs-5"></i>
+                            </div>
+                            <div class="d-flex flex-column text-end" style="line-height: 1.2;">
+                                <span class="text-white fw-bold" style="font-size: 0.85rem;">Administrator</span>
+                                <span class="text-white-50 text-truncate" style="font-size: 0.7rem; max-width: 150px;" id="admin-email-display">Loading...</span>
+                            </div>
+                            <div class="vr bg-white opacity-25 mx-1" style="height: 25px;"></div>
+                            <button id="logout-btn" class="btn btn-link p-0 text-white-50 logout-icon" title="Secure Logout">
+                                <i class="bi bi-power fs-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-overview">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3"><div class="glass-panel p-4 stat-card h-100"><h3 class="fw-bold mb-0" id="stat-total">0</h3><small class="text-white-50 text-uppercase fw-bold">Total Reports</small></div></div>
+                        <div class="col-md-3"><div class="glass-panel p-4 stat-card h-100" style="border-bottom: 3px solid #f59e0b;"><h3 class="fw-bold mb-0" id="stat-pending">0</h3><small class="text-white-50 text-uppercase fw-bold">Pending Fixes</small></div></div>
+                        <div class="col-md-3"><div class="glass-panel p-4 stat-card h-100" style="border-bottom: 3px solid #10b981;"><h3 class="fw-bold mb-0" id="stat-resolved">0</h3><small class="text-white-50 text-uppercase fw-bold">Resolved</small></div></div>
+                        <div class="col-md-3"><div class="glass-panel p-4 stat-card h-100"><h3 class="fw-bold mb-0" id="stat-workers">0</h3><small class="text-white-50 text-uppercase fw-bold">Active Workers</small></div></div>
+                    </div>
+                    <div class="glass-panel p-3"><div id="admin-map" class="map-container" style="height: 600px;"></div></div>
+                </div>
+
+                <div id="tab-workers" class="d-none">
+                    <div class="glass-panel p-5">
+                        <h4 class="text-white fw-bold mb-4">Worker Verification Queue</h4>
+                        <div class="table-responsive">
+                            <table class="table table-glass align-middle">
+                                <thead><tr class="text-white-50 text-uppercase" style="font-size: 0.75rem;"><th>Worker</th><th>Email</th><th>Status</th><th>ID Proof</th><th class="text-end">Actions</th></tr></thead>
+                                <tbody id="worker-table"><tr><td colspan="5" class="text-center text-white-50 py-5">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-feed" class="d-none">
+                    <div class="glass-panel p-4">
+                        <div class="d-flex justify-content-between mb-4 border-bottom border-white-10 pb-3">
+                            <h4 class="text-white fw-bold">Community Feed</h4>
+                            <button class="btn btn-sm btn-outline-light" onclick="loadDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                        </div>
+                        <div id="feed-container"></div>
+                    </div>
+                </div>
+
+                <div id="tab-clusters" class="d-none h-100">
+                    <div class="row h-100 g-4">
+                        <div class="col-lg-7">
+                            <div class="glass-panel p-4 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="text-white mb-0">Geospatial Hotspots</h4>
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info">Live Heatmap</span>
+                                </div>
+                                <div id="cluster-map" class="map-container" style="height: 600px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-5">
+                            <div class="glass-panel p-4 h-100 d-flex flex-column">
+                                <h4 class="text-white mb-3">Duplicate Detector</h4>
+                                <p class="text-white-50 small mb-4">AI identifies similar reports based on image, location, and description.</p>
+                                
+                                <button class="btn btn-primary w-100 mb-4 fw-bold" onclick="runClusterScan()">
+                                    <i class="bi bi-stars me-2"></i> Scan for Duplicates
+                                </button>
+                                
+                                <div id="duplicate-feed" class="overflow-auto flex-grow-1 pe-2" style="max-height: 500px;">
+                                    <div class="text-center text-white-50 py-5">
+                                        <i class="bi bi-search fs-1 mb-3 d-block opacity-25"></i>
+                                        <p class="small">Click 'Scan' to find duplicates.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-priority" class="d-none">
+                    <div class="glass-panel p-5">
+                        <div class="d-flex justify-content-between align-items-center mb-5">
+                            <div>
+                                <h4 class="text-white mb-1">AI Priority Matrix</h4>
+                                <p class="text-white-50 mb-0">Gemini analyzes location context, issue type, and urgency.</p>
+                            </div>
+                            <button class="btn btn-warning fw-bold" onclick="runAIAnalysis()">Generate Insights</button>
+                        </div>
+                        <div class="row" id="priority-container">
+                            <div class="text-center w-100 py-5"><p class="text-white-50">Waiting for AI analysis...</p></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="idModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border border-secondary">
+                <div class="modal-header border-secondary"><h5 class="modal-title text-white">ID Proof</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center p-4"><img id="modal-id-image" src="" class="img-fluid rounded border border-secondary"><p id="no-id-msg" class="text-white-50 mt-3 d-none">No ID uploaded.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border border-secondary">
+                <div class="modal-header border-secondary"><h5 class="modal-title text-white">Assign Task</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <p class="text-white-50 mb-3">Select a verified worker:</p>
+                    <select id="worker-select" class="form-select bg-black text-white border-secondary mb-3"><option selected disabled>Loading workers...</option></select>
+                    <input type="hidden" id="assign-report-id">
+                    <button class="btn btn-primary w-100" onclick="confirmAssignment()">Confirm Assignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyA-ClZaEkufcnC_y6LgirCb5nq0h_NxoXg", authDomain: "aidrix-93940.firebaseapp.com", projectId: "aidrix-93940" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        let map, clusterMap;
+        
+        // GLOBAL DATA STORE FOR LOOKUPS
+        window.allReports = [];
+
+        auth.onAuthStateChanged(user => {
+            if(user && user.email.toLowerCase() === 'admin@aidrix.com') {
+                document.getElementById('admin-email-display').innerText = user.email;
+                window.loadDashboard = loadDashboard;
+                loadDashboard();
+            } else { window.location.href = '/'; }
+        });
+
+        async function loadDashboard() {
+            const resWorkers = await fetch('/api/workers/pending');
+            const workers = await resWorkers.json();
+            renderWorkers(workers);
+
+            const resReports = await fetch('/api/reports/feed');
+            const reports = await resReports.json();
+            
+            // Store globally for AI lookups
+            window.allReports = reports;
+
+            renderFeed(reports);
+            
+            const resActive = await fetch('/api/workers/verified');
+            const activeWorkers = await resActive.json();
+            renderStats(reports, activeWorkers.length);
+            
+            initMap(reports);
+            initClusterMap(reports);
+        }
+
+        window.generatePDF = () => { window.open('/api/admin/generate_pdf', '_blank'); };
+
+        function renderFeed(reports) {
+            const container = document.getElementById('feed-container');
+            const badge = document.getElementById('feed-badge');
+            const activeReports = reports.filter(r => r.status !== 'Resolved');
+            badge.innerText = activeReports.length;
+            container.innerHTML = '';
+            if(activeReports.length === 0) { container.innerHTML = '<div class="text-center text-white-50 py-5">No active reports. Good job!</div>'; return; }
+            activeReports.forEach(r => {
+                let imgHtml = (r.has_image && r.image) ? `<img src="${r.image.startsWith('data:image') ? r.image : `data:image/jpeg;base64,${r.image}`}" class="feed-img">` : '';
+                let actionButtons = r.status === 'Pending' ? `<button class="btn btn-sm btn-outline-success" onclick="openAssignModal('${r.id}')">Assign</button><button class="btn btn-sm btn-outline-danger" onclick="deleteReport('${r.id}')">Delete</button>` : `<span class="text-info small me-3">Assigned</span><button class="btn btn-sm btn-outline-danger" onclick="deleteReport('${r.id}')">Delete</button>`;
+                container.innerHTML += `<div class="feed-card"><div class="d-flex justify-content-between mb-2"><h6 class="fw-bold text-white mb-0">${r.user_email.split('@')[0]}</h6><small class="text-white-50">${r.timestamp.split(' ')[0]}</small></div><p class="text-white-50 mb-0">${r.description}</p><small class="text-info">Lat:${r.lat?.toFixed(3)}, Lng:${r.lng?.toFixed(3)}</small>${imgHtml}<div class="mt-3 border-top border-white-10 pt-3 text-end d-flex justify-content-end align-items-center gap-2">${actionButtons}</div></div>`;
+            });
+        }
+
+        function renderStats(reports, workerCount) {
+            document.getElementById('stat-total').innerText = reports.length;
+            document.getElementById('stat-pending').innerText = reports.filter(r => r.status === 'Pending').length;
+            document.getElementById('stat-resolved').innerText = reports.filter(r => r.status === 'Resolved').length;
+            document.getElementById('stat-workers').innerText = workerCount; 
+        }
+
+        function initMap(data) { if(map) map.remove(); map = L.map('admin-map').setView([20.59, 78.96], 5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); data.forEach(r => { if(r.lat) L.marker([r.lat, r.lng]).addTo(map); }); }
+        function initClusterMap(reports) { if(!clusterMap) { clusterMap = L.map('cluster-map').setView([20.59, 78.96], 5); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(clusterMap); } else { clusterMap.eachLayer(l => { if(!!l.toGeoJSON) clusterMap.removeLayer(l); }); } reports.slice(0,10).forEach(r => { if(r.status === 'Pending') { L.circle([r.lat, r.lng], {color:'red', radius:500}).addTo(clusterMap); } }); }
+
+        function renderWorkers(workers) {
+            const table = document.getElementById('worker-table');
+            const badge = document.getElementById('worker-badge');
+            if(workers.length > 0) { badge.innerText = workers.length; badge.classList.remove('d-none'); table.innerHTML = ''; workers.forEach(w => { window[`id_${w.uid}`] = w.id_proof; const idBtn = w.id_proof ? `<button class="btn btn-sm btn-outline-info" onclick="viewID('${w.uid}')">View</button>` : `<span class="text-white-50 small">--</span>`; table.innerHTML += `<tr><td>${w.email.split('@')[0]}</td><td class="text-white-50">${w.email}</td><td><span class="status-badge bg-pending">Pending</span></td><td>${idBtn}</td><td class="text-end"><button class="action-btn btn-approve me-2" onclick="approveWorker('${w.uid}')"><i class="bi bi-check-lg"></i></button><button class="action-btn btn-reject" onclick="rejectWorker('${w.uid}')"><i class="bi bi-trash"></i></button></td></tr>`; }); } else { badge.classList.add('d-none'); table.innerHTML = `<tr><td colspan="5" class="text-center text-white-50 py-5">No pending approvals.</td></tr>`; }
+        }
+
+        window.openAssignModal = async (rid) => { document.getElementById('assign-report-id').value = rid; const select = document.getElementById('worker-select'); const res = await fetch('/api/workers/verified'); const workers = await res.json(); select.innerHTML = '<option selected disabled>Choose a Worker</option>'; workers.forEach(w => select.innerHTML += `<option value="${w.email}">${w.email}</option>`); new bootstrap.Modal(document.getElementById('assignModal')).show(); };
+        window.confirmAssignment = async () => { const rid = document.getElementById('assign-report-id').value; const worker = document.getElementById('worker-select').value; if(!worker || worker === 'Choose a Worker') return alert("Select worker"); await fetch('/api/reports/assign', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ report_id: rid, worker_email: worker }) }); alert("Assigned!"); location.reload(); };
+        
+        // --- FIXED REMOVAL LOGIC ---
+        window.approveWorker = async (uid) => { if(confirm("Approve?")) { await fetch('/api/workers/approve', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uid})}); loadDashboard(); }};
+        window.rejectWorker = async (uid) => { if(confirm("Reject?")) { await fetch('/api/workers/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uid})}); loadDashboard(); }};
+        
+        // --- NEW: Global Delete Wrapper to Handle Clicks ---
+        window.removeDuplicate = async (rid, cardId) => {
+            if(!rid || rid === 'undefined') return alert("Error: Invalid Report ID");
+            if(confirm("Permanently delete this report?")) {
+                try {
+                    await fetch('/api/reports/delete', {
+                        method:'POST', 
+                        headers:{'Content-Type':'application/json'}, 
+                        body:JSON.stringify({id: rid})
+                    });
+                    // Remove card immediately from UI
+                    document.getElementById(cardId).remove();
+                    // Optionally reload to sync
+                    // loadDashboard(); 
+                } catch(e) { alert("Deletion failed"); }
+            }
+        };
+
+        window.deleteReport = async (rid) => { 
+            if(confirm("Delete?")) { 
+                await fetch('/api/reports/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id: rid})}); 
+                loadDashboard(); 
+            }
+        };
+
+        window.viewID = (uid) => { const img = document.getElementById('modal-id-image'); const src = window[`id_${uid}`]; if(src) { img.src = src; img.classList.remove('d-none'); document.getElementById('no-id-msg').classList.add('d-none'); } else { img.classList.add('d-none'); document.getElementById('no-id-msg').classList.remove('d-none'); } new bootstrap.Modal(document.getElementById('idModal')).show(); };
+        window.switchTab = (tab, btn) => { ['overview', 'workers', 'feed', 'clusters', 'priority'].forEach(t => document.getElementById(`tab-${t}`)?.classList.add('d-none')); document.getElementById(`tab-${tab}`).classList.remove('d-none'); document.querySelectorAll('.active-tab').forEach(b => b.classList.remove('active-tab')); btn.classList.add('active-tab'); if(tab === 'overview' && map) setTimeout(() => map.invalidateSize(), 200); if(tab === 'clusters' && clusterMap) setTimeout(() => clusterMap.invalidateSize(), 200); };
+        
+        // --- UPDATED: CLUSTER SCAN WITH ROBUST REMOVAL & NO IMAGE ---
+        window.runClusterScan = async () => {
+            const container = document.getElementById('duplicate-feed');
+            container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-white-50">AI Analyzing proximity & images...</p></div>';
+            
+            try {
+                const res = await fetch('/api/ai/analyze'); 
+                const data = await res.json();
+                
+                container.innerHTML = '';
+                
+                if(data.duplicates && data.duplicates.length > 0) {
+                    data.duplicates.forEach((d, i) => {
+                        // ROBUST ID CHECK: AI 'id' might be 'duplicate_id' or just 'id'
+                        let reportId = d.duplicate_id || d.id; 
+                        
+                        // Find matching report in global list
+                        let report = window.allReports.find(r => r.id === reportId);
+                        
+                        // SMART FALLBACK: If AI ID is missing, fuzzy match by description
+                        if (!reportId && d.desc) {
+                            const match = window.allReports.find(r => r.description.trim() === d.desc.trim());
+                            if (match) {
+                                report = match;
+                                reportId = match.id;
+                            }
+                        }
+
+                        // Fallback Text
+                        let desc = report ? report.description : (d.desc || "Similar content detected");
+                        
+                        // --- FIX: Specific User Name ---
+                        // Use the report's user_email split by @, or fallback to 'Report User'
+                        let user = (report && report.user_email) ? report.user_email.split('@')[0] : "Report User"; 
+
+                        let reason = d.reason || "High visual similarity detected by AI.";
+                        
+                        // --- FIX: Remove Image Preview ---
+                        // Only generate HTML if there IS an image. If not, empty string.
+                        let imgHtml = (report && report.image) ? 
+                            `<img src="${report.image.startsWith('data:image') ? report.image : `data:image/jpeg;base64,${report.image}`}" class="img-fluid rounded mb-2 border border-warning" style="max-height:120px; width:100%; object-fit:cover;">` 
+                            : ''; 
+
+                        container.innerHTML += `
+                            <div class="ai-card border-warning mb-3 p-3 position-relative" id="dup-card-${i}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill"></i> Duplicate</span>
+                                    <small class="text-white-50">Cluster #${i+1}</small>
+                                </div>
+                                ${imgHtml}
+                                <div class="mb-2">
+                                    <strong class="text-white d-block text-truncate">${desc}</strong>
+                                    <div class="d-flex justify-content-between small text-white-50">
+                                        <span>User: ${user}</span>
+                                        <span>${report ? report.timestamp.split(' ')[0] : ''}</span>
+                                    </div>
+                                </div>
+                                <p class="text-info small fst-italic mb-3"><i class="bi bi-robot"></i> ${reason}</p>
+                                <div class="d-flex gap-2">
+                                     <button class="btn btn-sm btn-outline-light w-50" onclick="document.getElementById('dup-card-${i}').remove()"><i class="bi bi-check2"></i> Keep</button>
+                                     <button class="btn btn-sm btn-danger w-50" onclick="removeDuplicate('${reportId}', 'dup-card-${i}')"><i class="bi bi-trash"></i> Remove</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = `<div class="alert bg-success bg-opacity-10 text-success border-success text-center"><i class="bi bi-check-circle-fill me-2"></i> No duplicate issues found.</div>`;
+                }
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-danger text-center">Analysis failed.</div>';
+            }
+        };
+
+        window.runAIAnalysis = async () => {
+             document.getElementById('priority-container').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-warning"></div><p>Analyzing...</p></div>';
+             try {
+                 const res = await fetch('/api/ai/analyze'); const data = await res.json();
+                 const container = document.getElementById('priority-container'); container.innerHTML = '';
+                 if(!data.priorities) { container.innerHTML = 'No data'; return; }
+                 
+                 for(let id in data.priorities) {
+                     let p = data.priorities[id];
+                     const report = window.allReports.find(r => r.id === id);
+                     const title = report ? report.description.substring(0, 30) : "Issue Report";
+                     
+                     // --- FIX: Specific User Name for Priority ---
+                     const user = (report && report.user_email) ? report.user_email.split('@')[0] : "Report User";
+                     
+                     container.innerHTML += `
+                     <div class="col-md-6 mb-3">
+                        <div class="ai-card h-100">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div><h5 class="text-white mb-0">${title}</h5><small class="text-white-50">By: ${user}</small></div>
+                                <div class="priority-score">${p.score}</div>
+                            </div>
+                            <hr class="border-white-10 my-2">
+                            <p class="mb-0 text-white-50 small">${p.reason}</p>
+                        </div>
+                     </div>`;
+                 }
+             } catch(e) { alert("AI Error"); }
+        };
+
+        document.getElementById('logout-btn').addEventListener('click', async () => { await signOut(auth); window.location.href = '/'; });
+    </script>
+</body>
+</html>

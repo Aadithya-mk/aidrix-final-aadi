@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aidrix | The Future of Civic Engagement</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        .toast-container { z-index: 9999 !important; }
+        .glass-nav.scrolled { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); box-shadow: 0 4px 30px rgba(0,0,0,0.1); }
+        .cursor-pointer { cursor: pointer; }
+        .hero-text-container { padding-top: 20px; }
+    </style>
+</head>
+<body data-bs-spy="scroll" data-bs-target="#main-nav" tabindex="0">
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="liveToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fs-6 fw-bold" id="toastMessage">Welcome to Aidrix!</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <nav id="main-nav" class="navbar navbar-expand-lg fixed-top navbar-dark glass-nav transition-all py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#">Aidrix<span class="text-primary">.</span></a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="bi bi-list fs-2 text-white"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-4">
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#impact">Impact</a></li>
+                    <li class="nav-item">
+                        <button class="btn btn-gradient rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#authModal">
+                            Get Started <i class="bi bi-arrow-right-short"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="hero-section d-flex align-items-center position-relative overflow-hidden">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        
+        <div class="container position-relative z-2">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6 text-white pt-5 pt-lg-0 hero-text-container" data-aos="fade-right" data-aos-duration="1000">
+                    <h1 class="display-3 fw-black lh-sm mb-4">
+                        Transform Your City <br>
+                        <span class="text-gradient-main">With Intelligence.</span>
+                    </h1>
+                    <p class="lead text-white-50 mb-5 pe-lg-5">
+                        Aidrix combines <strong>AI</strong> and community power to identify, track, and solve civic issues instantly. Snap a photo, solve a problem.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button class="btn btn-light btn-lg rounded-pill px-5 fw-bold shadow-lg hover-lift" data-bs-toggle="modal" data-bs-target="#authModal">
+                            Report Issue
+                        </button>
+                        <a href="#features" class="btn btn-outline-light btn-lg rounded-pill px-5 fw-bold hover-lift">
+                            Learn More
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 text-center" data-aos="fade-left" data-aos-delay="200" data-aos-duration="1000">
+                    <div class="hero-image-wrapper floating-anim mt-5 mt-lg-0">
+                        <img src="{{ url_for('static', filename='hero-illustration.png') }}" 
+                             onerror="this.src='https://cdn3d.iconscout.com/3d/premium/thumb/smart-city-5354562-4462150.png'"
+                             alt="Smart City AI" class="img-fluid drop-shadow-xl" style="max-width: 90%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scroll-down">
+            <div class="mouse"><div class="wheel"></div></div>
+        </div>
+    </section>
+
+    <section id="features" class="py-5 bg-dark position-relative">
+        <div class="container py-5">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-7 text-center text-white" data-aos="fade-up">
+                    <h6 class="text-info text-uppercase fw-bold ls-2">Why Aidrix?</h6>
+                    <h2 class="display-5 fw-bold mt-2">Built for the Modern Citizen</h2>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card glass-card p-4 h-100">
+                        <div class="icon-square bg-gradient-1 mb-4"><i class="bi bi-camera-fill text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">Visual AI Analysis</h4>
+                        <p class="text-white-50">Don't just describe it. Show it. Our Gemini AI analyzes pixels to determine severity and category instantly.</p>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card glass-card p-4 h-100">
+                        <div class="icon-square bg-gradient-2 mb-4"><i class="bi bi-geo-alt-fill text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">Smart Geo-Clustering</h4>
+                        <p class="text-white-50">We group duplicate reports automatically using vector embeddings, so authorities see one problem, not fifty.</p>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card glass-card p-4 h-100">
+                        <div class="icon-square bg-gradient-3 mb-4"><i class="bi bi-trophy-fill text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">Gamified Impact</h4>
+                        <p class="text-white-50">Earn badges, climb the leaderboard, and get recognized by your local council for being a top citizen.</p>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card glass-card p-4 h-100">
+                        <div class="icon-square bg-gradient-4 mb-4"><i class="bi bi-chat-dots-fill text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">AI Civic Chatbot</h4>
+                        <p class="text-white-50">Have a question? Our 24/7 AI assistant can guide you through reporting and answer civic queries instantly.</p>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card glass-card p-4 h-100">
+                        <div class="icon-square bg-gradient-5 mb-4"><i class="bi bi-activity text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">Real-Time Tracking</h4>
+                        <p class="text-white-50">Watch the status of your reports move from 'Submitted' to 'In Progress' to 'Resolved' live on the map.</p>
+                    </div>
+                </div>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card glass-card p-4 h-100 border-info">
+                        <div class="icon-square bg-gradient-1 mb-4"><i class="bi bi-bar-chart-line-fill text-white fs-4"></i></div>
+                        <h4 class="text-white fw-bold">Live Community Stats</h4>
+                        <p class="text-white-50">Transparency first. View live data on how many issues are being fixed in your neighborhood right now.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="impact" class="py-5 position-relative overflow-hidden" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);">
+        <div class="container position-relative z-2 py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-5 mb-5 mb-lg-0" data-aos="fade-right">
+                    <h6 class="text-warning text-uppercase fw-bold ls-2">Live Impact</h6>
+                    <h2 class="display-5 fw-bold text-white mb-4">Real Results,<br>Happening Now.</h2>
+                    <p class="text-white-50 lead mb-4">See the actual impact citizens like you are making. Data is fetched live from the Aidrix database.</p>
+                    
+                    <div class="d-flex align-items-center gap-4">
+                        <div>
+                            <h3 class="fw-bold text-white mb-0 display-4" id="live-resolved-count">--</h3>
+                            <small class="text-white-50">Issues Resolved</small>
+                        </div>
+                        <div class="vr bg-white opacity-25"></div>
+                        <div>
+                            <h3 class="fw-bold text-white mb-0 display-4" id="live-pending-count">--</h3>
+                            <small class="text-white-50">In Progress</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6 offset-lg-1" data-aos="fade-left">
+                    <div class="glass-card p-4 rounded-4 position-relative border border-white-10" style="background: rgba(255,255,255,0.03);">
+                        <div class="position-absolute top-0 end-0 translate-middle-y me-4">
+                            <div class="bg-gradient p-3 rounded-circle shadow-lg" style="background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);">
+                                <i class="bi bi-award-fill text-dark fs-3"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-white fw-bold mb-4">Top 3 Contributors (Live)</h5>
+                        <div id="leaderboard-container">
+                            <div class="text-center py-4 text-white-50">
+                                <div class="spinner-border text-warning spinner-border-sm mb-2"></div>
+                                <p class="small">Fetching live data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-modal border-0 text-white" style="backdrop-filter: blur(20px); background: rgba(20, 20, 35, 0.9);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Welcome Back</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-center gap-3 mb-4 p-1 rounded-pill" style="background: rgba(255,255,255,0.1);">
+                        <button class="btn btn-sm rounded-pill w-50 text-white fw-bold active-tab bg-primary" id="tab-login" onclick="switchMode('login')">Login</button>
+                        <button class="btn btn-sm rounded-pill w-50 text-white-50" id="tab-signup" onclick="switchMode('signup')">Sign Up</button>
+                    </div>
+
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">I am a:</label>
+                            <select id="login-role" class="form-select glass-input text-white bg-dark border-secondary">
+                                <option value="user" class="text-dark" selected>Citizen (User)</option>
+                                <option value="worker" class="text-dark">Civic Worker</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">Email Address</label>
+                            <input type="email" id="login-email" class="form-control glass-input" placeholder="name@example.com" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small">Password</label>
+                            <input type="password" id="login-pass" class="form-control glass-input" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-gradient w-100 rounded-pill py-2 shadow-lg mb-3 btn-primary">Log In</button>
+                    </form>
+
+                    <form id="signup-form" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">I am a:</label>
+                            <select id="signup-role" class="form-select glass-input text-white bg-dark border-secondary" onchange="toggleWorkerFields()">
+                                <option value="user" class="text-dark" selected>Citizen (User)</option>
+                                <option value="worker" class="text-dark">Civic Worker</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">Full Name</label>
+                            <input type="text" id="signup-name" class="form-control glass-input" placeholder="John Doe" required>
+                        </div>
+                        <div id="worker-upload-field" class="mb-3 d-none">
+                            <label class="form-label text-white-50 small">Government ID (Verification)</label>
+                            <input type="file" id="signup-id-file" class="form-control glass-input">
+                            <small class="text-warning" style="font-size: 0.7rem;">*Required for worker verification</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">Email Address</label>
+                            <input type="email" id="signup-email" class="form-control glass-input" placeholder="name@example.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white-50 small">Password</label>
+                            <input type="password" id="signup-pass" class="form-control glass-input" placeholder="Create a strong password" required>
+                            <ul class="mt-2 mb-0 ps-3 text-white-50 list-unstyled" style="font-size: 0.75rem;">
+                                <li id="req-len" class="text-danger"><i class="bi bi-circle"></i> Min 8 characters</li>
+                                <li id="req-case" class="text-danger"><i class="bi bi-circle"></i> Uppercase & Lowercase</li>
+                                <li id="req-num" class="text-danger"><i class="bi bi-circle"></i> Number (0-9)</li>
+                                <li id="req-spec" class="text-danger"><i class="bi bi-circle"></i> Special Character (!@#)</li>
+                            </ul>
+                        </div>
+                        <button type="submit" id="signup-btn" class="btn btn-gradient w-100 rounded-pill py-2 shadow-lg mb-3 btn-success">Create Account</button>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="small text-white-50 mb-2">Or continue with</p>
+                        <button class="social-btn btn btn-light rounded-circle p-2" id="google-btn">
+                            <i class="bi bi-google text-danger"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-black text-white py-5 border-top border-white-10">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <a href="#" class="d-inline-block mb-3 text-decoration-none">
+                        <span class="fw-bold fs-4 text-white">Aidrix</span>
+                    </a>
+                    <p class="text-white-50">Empowering communities through AI and collective action.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script type="module">
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // REMOVED 'getStorage' to prevent any attempts to use it.
+        // We will convert file to Base64 String instead.
+
+        // FIREBASE CONFIG
+        const firebaseConfig = { apiKey: "AIzaSyA-ClZaEkufcnC_y6LgirCb5nq0h_NxoXg", authDomain: "aidrix-93940.firebaseapp.com", projectId: "aidrix-93940", storageBucket: "aidrix-93940.appspot.com" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // UI HELPERS
+        window.showToast = (msg, type='success') => {
+            const el = document.getElementById('liveToast');
+            document.getElementById('toastMessage').innerText = msg;
+            el.className = `toast align-items-center text-white border-0 bg-${type === 'error' ? 'danger' : 'success'}`;
+            const toast = new bootstrap.Toast(el, { delay: 3000 });
+            toast.show();
+        };
+
+        window.switchMode = (mode) => {
+            document.getElementById('login-form').classList.toggle('d-none', mode !== 'login');
+            document.getElementById('signup-form').classList.toggle('d-none', mode !== 'signup');
+            document.getElementById('tab-login').className = `btn btn-sm rounded-pill w-50 fw-bold ${mode === 'login' ? 'active-tab bg-primary text-white' : 'text-white-50'}`;
+            document.getElementById('tab-signup').className = `btn btn-sm rounded-pill w-50 fw-bold ${mode === 'signup' ? 'active-tab bg-primary text-white' : 'text-white-50'}`;
+            document.getElementById('modalTitle').innerText = mode === 'login' ? "Welcome Back" : "Join the Movement";
+        };
+
+        window.toggleWorkerFields = () => {
+            const isWorker = document.getElementById('signup-role').value === 'worker';
+            document.getElementById('worker-upload-field').classList.toggle('d-none', !isWorker);
+            document.getElementById('signup-id-file').required = isWorker;
+        };
+
+        // --- PASSWORD STRENGTH CHECKER ---
+        const passInput = document.getElementById('signup-pass');
+        if(passInput) {
+            passInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                const setStatus = (id, valid) => {
+                    const el = document.getElementById(id);
+                    if(valid) {
+                        el.classList.replace('text-danger', 'text-success');
+                        el.innerHTML = '<i class="bi bi-check-lg"></i> ' + el.innerText.replace(/✔|✖/g, '').trim();
+                    } else {
+                        el.classList.replace('text-success', 'text-danger');
+                        el.innerHTML = '<i class="bi bi-circle"></i> ' + el.innerText.replace(/<i.*<\/i>/, '').trim();
+                    }
+                };
+                setStatus('req-len', val.length >= 8);
+                setStatus('req-case', /[A-Z]/.test(val) && /[a-z]/.test(val));
+                setStatus('req-num', /\d/.test(val));
+                setStatus('req-spec', /[!@#$%^&*(),.?":{}|<>]/.test(val));
+            });
+        }
+
+        // --- HELPER: CONVERT FILE TO BASE64 (The Magic Function) ---
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // 1. GOOGLE LOGIN
+        document.getElementById('google-btn').addEventListener('click', async () => {
+            try {
+                const isLoginTab = !document.getElementById('login-form').classList.contains('d-none');
+                const intendedRole = isLoginTab 
+                    ? document.getElementById('login-role').value 
+                    : document.getElementById('signup-role').value;
+                
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                
+                const docSnap = await getDoc(doc(db, "users", user.uid));
+                
+                if (!docSnap.exists()) {
+                    const isVerified = intendedRole === 'user';
+                    await setDoc(doc(db, "users", user.uid), { 
+                        email: user.email, 
+                        role: intendedRole, 
+                        isVerified: isVerified, 
+                        displayName: user.displayName 
+                    });
+                    
+                    showToast("Account Created! Redirecting...", 'success');
+                    setTimeout(() => window.location.href = `/dashboard/${intendedRole}`, 2000);
+                } else {
+                    const role = docSnap.data().role;
+                    window.location.href = `/dashboard/${role}`;
+                }
+            } catch (error) { 
+                console.error("Google Auth Error:", error);
+                showToast(error.message, 'error'); 
+            }
+        });
+
+        // 2. EMAIL LOGIN
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const dropdownRole = document.getElementById('login-role').value;
+
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, pass);
+                if(email === 'admin@aidrix.com') { window.location.href = '/dashboard/admin'; return; }
+                
+                const docSnap = await getDoc(doc(db, "users", cred.user.uid));
+                if (docSnap.exists()) {
+                    window.location.href = `/dashboard/${docSnap.data().role}`;
+                } else {
+                    const isVerified = dropdownRole === 'user';
+                    await setDoc(doc(db, "users", cred.user.uid), { 
+                        email: email, 
+                        role: dropdownRole, 
+                        isVerified: isVerified 
+                    });
+                    window.location.href = `/dashboard/${dropdownRole}`;
+                }
+            } catch (error) { showToast("Login Failed: " + error.message, 'error'); }
+        });
+
+        // 3. SIGNUP (UPDATED: USES BASE64, NO STORAGE)
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('signup-btn');
+            btn.disabled = true; btn.innerText = "Creating...";
+
+            const email = document.getElementById('signup-email').value;
+            const pass = document.getElementById('signup-pass').value;
+            const name = document.getElementById('signup-name').value;
+            const role = document.getElementById('signup-role').value;
+            const fileInput = document.getElementById('signup-id-file');
+
+            const isValid = pass.length >= 8 && /[A-Z]/.test(pass) && /[a-z]/.test(pass) && /\d/.test(pass) && /[!@#$%^&*]/.test(pass);
+            if (!isValid) {
+                btn.disabled = false; btn.innerText = "Create Account";
+                return showToast("Password weak!", 'error');
+            }
+
+            try {
+                // A. Create User
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                await updateProfile(cred.user, { displayName: name });
+                
+                // B. Convert Image to Base64 (NO Storage Bucket needed)
+                let idBase64 = "";
+                if (role === 'worker' && fileInput.files[0]) {
+                    // Limit file size to 1MB to prevent Firestore limits
+                    if(fileInput.files[0].size > 1024 * 1024) {
+                        alert("File too large. Please upload an image under 1MB.");
+                        throw new Error("File too large");
+                    }
+                    idBase64 = await fileToBase64(fileInput.files[0]);
+                }
+
+                // C. Write to DB
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    email: email, 
+                    displayName: name, 
+                    role: role, 
+                    isVerified: role === 'user', 
+                    id_proof: idBase64 // Saving string directly!
+                });
+
+                if(role === 'user') { try { await sendEmailVerification(cred.user); } catch(e){} }
+
+                // D. Success
+                const modalEl = document.getElementById('authModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if(modal) modal.hide();
+
+                btn.innerText = "Success!";
+                showToast("Account Created! Redirecting...", 'success');
+                setTimeout(() => window.location.href = `/dashboard/${role}`, 2000);
+
+            } catch (error) { 
+                showToast(error.message, 'error');
+                if (auth.currentUser) await deleteUser(auth.currentUser).catch(e => {});
+                btn.disabled = false; btn.innerText = "Create Account";
+            }
+        });
+
+        AOS.init({ once: true, offset: 100 });
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('main-nav');
+            if (window.scrollY > 50) nav.classList.add('scrolled');
+            else nav.classList.remove('scrolled');
+        });
+
+        async function fetchRealStats() {
+            try {
+                const res = await fetch('/api/reports/feed');
+                const data = await res.json();
+                const resolved = data.filter(r => r.status === 'Resolved').length;
+                const pending = data.filter(r => r.status === 'Pending' || r.status === 'In Progress').length;
+                animateValue("live-resolved-count", 0, resolved, 2000);
+                animateValue("live-pending-count", 0, pending, 2000);
+                const counts = {}; data.forEach(r => { if(r.user_email) counts[r.user_email] = (counts[r.user_email]||0)+1; });
+                const sorted = Object.entries(counts).sort(([,a], [,b]) => b - a).slice(0, 3);
+                const lb = document.getElementById('leaderboard-container'); lb.innerHTML = '';
+                if(sorted.length === 0) lb.innerHTML = '<div class="text-white-50 text-center">No stats yet.</div>';
+                sorted.forEach(([email, num], i) => {
+                    let badge = i===0?'warning text-dark':(i===1?'secondary text-white':'info text-dark');
+                    let icon = i===0?'star-fill':(i===1?'shield-fill':'binoculars');
+                    lb.innerHTML += `<div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3 fade-in" style="background: rgba(255,255,255,0.05);"><div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" style="width:40px; height:40px;">${email[0].toUpperCase()}</div><div class="flex-grow-1"><h6 class="text-white mb-0">${email.split('@')[0]}</h6><small class="text-info">${num} Reports</small></div><span class="badge bg-${badge}"><i class="bi bi-${icon}"></i></span></div>`;
+                });
+            } catch(e) { console.log("Stats offline"); }
+        }
+
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id); if(!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        fetchRealStats();
+    </script>
+</body>
+</html>
